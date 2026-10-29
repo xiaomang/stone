@@ -1,0 +1,1 @@
+litestar --app stone.app:app run --reload
