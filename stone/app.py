@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 
 import pymongo
 from litestar import Litestar
+from litestar.config.cors import CORSConfig
 from litestar.datastructures import State
 from litestar.di import Provide
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.database import Database
 
 from stone.domains.healthy import HealthyController
+from stone.domains.token import TokenController
 from stone.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -36,14 +38,24 @@ async def provide_db(state: State) -> AsyncDatabase:
     return state["db"]
 
 
+async def provide_settings(state: State) -> Settings:
+    return state["settings"]
+
+
 def create_app(settings: Settings | None = None) -> Litestar:
     return Litestar(
         debug=settings.debug,
-        route_handlers=[HealthyController],
+        route_handlers=[HealthyController, TokenController],
         lifespan=[db_context],
         dependencies={
             "db": Provide(provide_db),
+            "settings": Provide(provide_settings),
         },
+        cors_config=CORSConfig(
+            allow_origins=["*"],
+            allow_methods=["*"],
+            allow_headers=["*"],
+        ),
     )
 
 
